@@ -8,8 +8,7 @@ let ConferenceProxy = module.exports = function (esl) {
 
     try {
         esl.api('conference json_list', res => {
-            console.log(res.getBody());
-            this.conf_list_ = res.getBody();
+            this.conf_list_ = JSON.parse(res.getBody());
         });
     } catch (e) {
         console.log(e);
@@ -23,17 +22,7 @@ ConferenceProxy.prototype.GetList = function () {
 
 ConferenceProxy.prototype.ProcessEvent = function (event) {
     let event_act = event.getHeader('Action');
-    let data_obj = {
-        conference_name: event.getHeader('Conference-Name'),
-        answer_state: event.getHeader('Answer-State'),
-        caller_name: event.getHeader('Caller-Caller-ID-Name'),
-        caller_number: event.getHeader('Caller-Caller-ID-Number'),
-        caller_addr: event.getHeader('Caller-Network-Addr'),
-        caller_dst_num: event.getHeader('Caller-Destination-Number'),
-        member_id: event.getHeader('Member-ID'),
-        member_type: event.getHeader('Member-Type'),
-        energy: event.getHeader('Current-Energy')
-    };
+    let data_obj = _GetConferenceMaintenanceHeader(event);
 
     switch (event_act) {
         case 'add-member':
