@@ -1,12 +1,14 @@
 /**
  * Created by john on 8/28/17.
  */
+const NoticeApi = require('../interface/event_notification_api');
 
-let PttConferenceProxy = module.exports = function (esl) {
-    let self = this;
+let PttConferenceProxy = module.exports = function () {
 
-    self.esl = esl;
-    self.ptt_status = [];
+};
+
+PttConferenceProxy.prototype.Init = function (esl) {
+    this.esl = esl;
 };
 
 PttConferenceProxy.prototype.DTMFFilter = function (event) {
@@ -23,59 +25,6 @@ PttConferenceProxy.prototype.DTMFFilter = function (event) {
                     self.change_ptt_speaking_right(conf, dtmf);
                 }
             }
-        });
-    } catch (e) {
-        console.log(e);
-    }
-};
-
-PttConferenceProxy.prototype.get_ptt_speaking_right_status = function(conf, uuid) {
-    let status = false;
-    let member_id = undefined;
-
-    if (conf.hasOwnProperty('members')) {
-        for (let i = 0; i < conf.members.length; ++i) {
-            let member = conf.members[i];
-            if (member.uuid === uuid) member_id = member.id;
-            if (member.flags.can_speak === true) status = true;
-        }
-    }
-
-    return [status, member_id];
-};
-
-PttConferenceProxy.prototype.change_ptt_speaking_right = function (conf, dtmf) {
-    let self = this;
-
-    let [status, member_id] = self.get_ptt_speaking_right_status(conf, dtmf.caller_uuid);
-    console.log('st:', member_id, status);
-
-    //TODO
-    switch (dtmf.dtmf_digit) {
-        case '*':
-            if (status) {
-                return;
-            } else {
-                command = 'conference ' + conf.conference_name +
-                    ' unmute ' + member_id;
-            }
-            break;
-        case '#':
-            if (status) {
-                command = 'conference ' + conf.conference_name +
-                    ' mute ' + member_id;
-            } else {
-                return;
-            }
-            break;
-        default:
-            return;
-    }
-
-    try {
-        console.log('command:', command);
-        self.esl.api(command, res => {
-            //console.log(res);
         });
     } catch (e) {
         console.log(e);
@@ -132,7 +81,71 @@ PttConferenceProxy.prototype.ProcessEvent = function (event) {
     }
 };
 
+PttConferenceProxy.prototype.ProcessRequest = function (data) {
+    //TODO
+};
+
 //private
+PttConferenceProxy.prototype.get_ptt_speaking_right_status = function(conf, uuid) {
+    let status = false;
+    let member_id = undefined;
+    let member_talker = undefined;
+
+    if (conf.hasOwnProperty('members')) {
+        for (let i = 0; i < conf.members.length; ++i) {
+            let member = conf.members[i];
+            if (member.uuid === uuid) {
+                member_id = member.id;
+            }
+            if (member.flags.can_speak === true) {
+                status = true;
+                member_talker = member.uuid;
+            }
+        }
+    }
+
+    return [status, member_id, member_talker];
+};
+
+PttConferenceProxy.prototype.change_ptt_speaking_right = function (conf, dtmf) {
+    let self = this;
+
+    let [status, member_id, member_talker] =
+        self.get_ptt_speaking_right_status(conf, dtmf.caller_uuid);
+    //console.log('st:', member_id, status, member_talker);
+
+    //TODO
+    switch (dtmf.dtmf_digit) {
+        case '*':
+            if (status) {
+                return;
+            } else {
+                command = 'conference ' + conf.conference_name +
+                    ' unmute ' + member_id;
+            }
+            break;
+        case '#':
+            if (status && member_talker === dtmf.caller_uuid) {
+                command = 'conference ' + conf.conference_name +
+                    ' mute ' + member_id;
+            } else {
+                return;
+            }
+            break;
+        default:
+            return;
+    }
+
+    try {
+        console.log('command:', command);
+        self.esl.api(command, res => {
+            //console.log(res);
+        });
+    } catch (e) {
+        console.log(e);
+    }
+};
+
 PttConferenceProxy.prototype.on_default_process_func = function (obj) {
     //console.log(obj);
 };
@@ -154,16 +167,6 @@ PttConferenceProxy.prototype.on_add_member = function (obj) {
 
 PttConferenceProxy.prototype.on_del_member = function (obj) {
     console.log('User leave conference:', obj.caller_name, obj.conference_name);
-
-    //TODO
-    for (let i = 0; i < this.ptt_status; ++i) {
-        let st = this.ptt_status[i];
-        if (st.conference_uuid === obj.conference_uuid
-            && st.talker_uuid === obj.caller_uuid) {
-            st.talker_uuid = '';
-            st.talker_member_id = '';
-        }
-    }
 };
 
 PttConferenceProxy.prototype.on_conference_create = function (obj) {
@@ -188,10 +191,28 @@ PttConferenceProxy.prototype.on_start_talking = function (obj) {
 
 PttConferenceProxy.prototype.on_mute_member = function (obj) {
     console.log('Conference mute member:', obj.caller_name, obj.conference_name);
+
+    //TODO
+    NoticeApi.SendNotice({
+        type: 'ptt',
+        sub_type: 'speaking-right-off',
+        msg: 'ok',
+        code: '200',
+        data: obj
+    });
 };
 
 PttConferenceProxy.prototype.on_unmute_member = function (obj) {
     console.log('Conference unmute member:', obj.caller_name, obj.conference_name);
+
+    //TODO
+    NoticeApi.SendNotice({
+        type: 'ptt',
+        sub_type: 'speaking-right-on',
+        msg: 'ok',
+        code: '200',
+        data: obj
+    });
 };
 
 PttConferenceProxy.prototype.on_kick_member = function (obj) {

@@ -1,28 +1,29 @@
 /**
  * Created by john on 8/28/17.
  */
+const NoticeApi = require('../interface/event_notification_api');
 
-let ConferenceProxy = module.exports = function (esl) {
-    let that = this;
-    that.esl = esl;
+let ConferenceProxy = module.exports = function () {
 
-    try {
-        esl.api('conference json_list', res => {
-            this.conf_list_ = JSON.parse(res.getBody());
-        });
-    } catch (e) {
-        console.log(e);
-    }
 };
 
-//public
-ConferenceProxy.prototype.GetList = function () {
-    return this.conf_list_;
+ConferenceProxy.prototype.Init = function (esl) {
+    this.esl_ = esl;
 };
 
+//process freeswitch event
 ConferenceProxy.prototype.ProcessEvent = function (event) {
     let event_act = event.getHeader('Action');
     let data_obj = _GetConferenceMaintenanceHeader(event);
+
+    //TODO
+    NoticeApi.SendNotice({
+        type:       'conference',
+        sub_type:   event_act,
+        msg:        'ok',
+        code:       '200',
+        data: data_obj
+    });
 
     switch (event_act) {
         case 'add-member':
@@ -68,6 +69,12 @@ ConferenceProxy.prototype.ProcessEvent = function (event) {
         default:
             return this.on_default_process_func(data_obj);
     }
+
+};
+
+//process request
+ConferenceProxy.prototype.ProcessRequest = function (data) {
+    //TODO
 };
 
 //private
@@ -81,15 +88,32 @@ ConferenceProxy.prototype.on_add_member = function (obj) {
 
 ConferenceProxy.prototype.on_del_member = function (obj) {
     console.log('User leave conference:', obj.caller_name, obj.conference_name);
-
 };
 
 ConferenceProxy.prototype.on_conference_create = function (obj) {
     console.log('New conference:', obj.conference_name);
+
+    //TODO
+    NoticeApi.SendNotice({
+        type:       'conference',
+        sub_type:   'conference-create',
+        msg:        'ok',
+        code:       '200',
+        data: obj
+    });
 };
 
 ConferenceProxy.prototype.on_conference_destroy = function (obj) {
     console.log('Conference destroy:', obj.conference_name);
+
+    //TODO
+    NoticeApi.SendNotice({
+        type:       'conference',
+        sub_type:   'conference-destroy',
+        msg:        'ok',
+        code:       '200',
+        data: obj
+    });
 };
 
 ConferenceProxy.prototype.on_dtmf = function (obj) {

@@ -1,13 +1,20 @@
 /**
  * Created by john on 8/25/17.
  */
-require('./common')();
 
 'use strict';
 
+require('./common/common')();
 let esl = require('modesl');
-let ConferenceProxy = require('./conference_proxy');
-let PttConferenceProxy = require('./ptt_conference_proxy');
+let ConferenceProxy = require('./controler/conference_proxy');
+let PttConferenceProxy = require('./controler/ptt_conference_proxy');
+
+const HttpServer = require('./interface/http_server');
+const WSServer = require('./interface/ws_server');
+
+HttpServer.Init({port: 40096});
+WSServer.Init({http_server: HttpServer.GetApp()});
+
 
 let conn = new esl.Connection('39.108.134.243', 8021, 'fs', () => {
     conn.api('version', res => {
@@ -27,8 +34,10 @@ let conn = new esl.Connection('39.108.134.243', 8021, 'fs', () => {
 
     conn.events('json', 'DTMF CUSTOM conference::maintenance', res => {
 
-        let conf_proxy = new ConferenceProxy(conn);
-        let ptt_proxy = new PttConferenceProxy(conn);
+        let conf_proxy = new ConferenceProxy();
+        let ptt_proxy = new PttConferenceProxy();
+        conf_proxy.Init(conn);
+        ptt_proxy.Init(conn);
 
         conn.on('esl::event::CUSTOM::*', event => {
             if (event.getHeader('Event-Subclass') === 'conference::maintenance') {

@@ -70,6 +70,7 @@ WSServer.prototype.SendNotification = function (data) {
 };
 
 WSServer.prototype.check_request_origin = function (origin) {
+    console.log('1111', origin);
     return true;
 };
 

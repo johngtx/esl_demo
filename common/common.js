@@ -1,10 +1,25 @@
 /**
  * Created by john on 8/29/17.
  */
+const ConferenceProxy = require('../controler/conference_proxy');
+const PttConferenceProxy = require('../controler/ptt_conference_proxy');
+
 module.exports = function (config) {
+    let conf_proxy = new ConferenceProxy();
+    let ptt_proxy = new PttConferenceProxy();
+    let config_ = {
+        enable_ws: true,
+        enable_mqtt: false
+    };
+
     global._GetDTMFHeader = get_dtmf_header;
     global._GetConferenceMaintenanceHeader
         = get_conference_maintenance_header;
+    global._ControlerFactory = {
+        GetConferenceProxy: () => { return conf_proxy; },
+        GetPttConferenceProxy: () => { return ptt_proxy; }
+    };
+    global._GetConfiguration = () => { return config_; };
 };
 
 function get_dtmf_header(event) {
