@@ -47,6 +47,7 @@ function get_conference_maintenance_header(event) {
         conference_name: event.getHeader('Conference-Name'),
         conference_uuid: event.getHeader('Conference-Unique-ID'),
         answer_state: event.getHeader('Answer-State'),
+        caller_uuid: event.getHeader('Caller-Unique-ID'),
         caller_name: event.getHeader('Caller-Caller-ID-Name'),
         caller_number: event.getHeader('Caller-Caller-ID-Number'),
         caller_addr: event.getHeader('Caller-Network-Addr'),
