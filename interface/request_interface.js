@@ -34,7 +34,23 @@ function dispatch_conference_request (buff) {
 function conference_request_router (req, res) {
     //TODO
     console.log('http request:', req.url);
-
-    res.write('111');
-    res.end();
+    if (req.url.indexOf('/getconflist') === 0 && req.method === 'GET') {
+        console.log('get conf list');
+        _ControlerFactory.GetConferenceProxy().GetConfList( data => {
+            let content = JSON.stringify(data);
+            res.write(content);
+            res.end();
+        });
+    } else if (req.url.indexOf('/getpttlist') === 0 && req.method === 'GET') {
+        console.log('get ptt list');
+        _ControlerFactory.GetPttConferenceProxy().GetConfList( data => {
+            let content = JSON.stringify(data);
+            res.write(content);
+            res.end();
+        });
+    } else {
+        console.log('22222');
+        res.writeHeader(404);
+        res.end();
+    }
 }

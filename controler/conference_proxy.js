@@ -8,7 +8,37 @@ let ConferenceProxy = module.exports = function () {
 };
 
 ConferenceProxy.prototype.Init = function (esl) {
+    console.log('11111111');
     this.esl_ = esl;
+    console.log(typeof(this.esl_));
+};
+
+ConferenceProxy.prototype.GetConfList = function (pfunc) {
+    let self = this;
+
+    if (typeof(pfunc) === 'function') {
+        try {
+            console.log(typeof(self.esl_));
+            console.log(typeof(this.esl_));
+            self.esl_.api("conference json_list", res => {
+                let data = JSON.parse(res.getBody());
+                let list = [];
+                for (let i = 0; i < data.length; ++i) {
+                    let conf = data[i];
+                    if (conf.conference_name.match('^90\\d{4}$')) {
+                        list.push(conf);
+                    }
+                }
+                pfunc(list);
+            });
+        } catch (e) {
+            console.log(e);
+            pfunc([]);
+        }
+    } else {
+        console.log('222', typeof(pfunc));
+        pfunc([]);
+    }
 };
 
 //process freeswitch event

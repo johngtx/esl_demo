@@ -11,6 +11,31 @@ PttConferenceProxy.prototype.Init = function (esl) {
     this.esl = esl;
 };
 
+PttConferenceProxy.prototype.GetPttList = function (pfunc) {
+    let self = this;
+
+    if (typeof(pfunc) === Function) {
+        try {
+            self.esl.api("conference json_list", res => {
+                let data = JSON.stringify(res.getBody());
+                let list = [];
+                for (let i = 0; i < data.length; ++i) {
+                    let conf = data[i];
+                    if (conf.conference_name.match('^80\\d{4}$')) {
+                        list.push(conf);
+                    }
+                }
+                pfunc(list);
+            });
+        } catch (e) {
+            console.log(e);
+            pfunc([]);
+        }
+    } else {
+        pfunc([]);
+    }
+}
+
 PttConferenceProxy.prototype.DTMFFilter = function (event) {
     let self = this;
     let dtmf = _GetDTMFHeader(event);
@@ -34,6 +59,15 @@ PttConferenceProxy.prototype.DTMFFilter = function (event) {
 PttConferenceProxy.prototype.ProcessEvent = function (event) {
     let event_act = event.getHeader('Action');
     let data_obj = _GetConferenceMaintenanceHeader(event);
+
+    //TODO
+    NoticeApi.SendNotice({
+        type: 'ptt',
+        sub_type: event_act,
+        msg: 'ok',
+        code: '200',
+        data: data_obj
+    });
 
     switch (event_act) {
         case 'add-member':
