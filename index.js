@@ -28,8 +28,9 @@ function init_app () {
             enable_mqtt: false
         }
     });
-}
+};
 
+init_app();
 //connect to freeSWITCH server
 let conn = new esl.Connection('39.108.134.243', 8021, 'fs', () => {
     conn.api('version', res => {

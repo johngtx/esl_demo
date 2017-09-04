@@ -21,7 +21,6 @@ WSServer.prototype.Init = function (config) {
         });
 
         self.ws_server.on('request', req => {
-            console.log('1111');
             if (!self.check_request_origin(req.origin)) {
                 req.reject();
                 console.log('connection reject:', req.origin);

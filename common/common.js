@@ -2,7 +2,7 @@
  * Created by john on 8/29/17.
  */
 module.exports = function (config) {
-    const application_ = {
+    let application_ = {
         HttpServerInstance: undefined,
         WSServerInstance: undefined,
         Configuration: {
@@ -12,7 +12,7 @@ module.exports = function (config) {
     };
 
     global._GetApplication = () => { return application_; };
-    global._InitApplication = app => { application_ = app; }
+    global._InitApplication = app => { application_ = Object.assign(app); }
 
     global._GetDTMFHeader = get_dtmf_header;
     global._GetConferenceMaintenanceHeader = get_conference_maintenance_header;
