@@ -1,12 +1,11 @@
 /**
  * Created by john on 8/30/17.
  */
-const WebSocketServer = require('websocket').server;
 const http = require('http');
-const RequestInterface = require('./request_interface');
+const WebSocketServer = require('websocket').server;
+const RequestInterface = require('../proxy/proxy_interface');
 
-
-let WSServer = function() {
+let WSServer = module.exports = function() {
     this.connection_list_ = [];
 };
 
@@ -70,10 +69,6 @@ WSServer.prototype.SendNotification = function (data) {
 };
 
 WSServer.prototype.check_request_origin = function (origin) {
-    console.log('1111', origin);
+    console.log('WSServer::check_request_origin ', origin);
     return true;
 };
-
-//export
-let ws_server = new WSServer();
-module.exports =  ws_server;

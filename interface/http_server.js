@@ -2,11 +2,9 @@
  * Created by john on 8/30/17.
  */
 const http = require('http');
-const RequestInterface = require('./request_interface');
+const RequestInterface = require('../proxy/proxy_interface');
 
-let HttpServer = function () {
-
-};
+let HttpServer = module.exports = function () {};
 
 HttpServer.prototype.Init = function (config) {
     let self = this;
@@ -44,6 +42,3 @@ HttpServer.prototype.Init = function (config) {
 HttpServer.prototype.GetApp = function () {
     return this.server;
 };
-
-let http_server = new HttpServer;
-module.exports = http_server;

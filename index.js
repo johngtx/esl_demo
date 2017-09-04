@@ -4,15 +4,33 @@
 
 'use strict';
 
-require('./common/common')();
+require('./common/common');
 let esl = require('modesl');
 
 const HttpServer = require('./interface/http_server');
 const WSServer = require('./interface/ws_server');
+const ConfProxyFactory = require('./proxy/conference_proxy');
+const PttProxyFactory = require('./proxy/ptt_conference_proxy');
 
-HttpServer.Init({port: 40096});
-WSServer.Init({http_server: HttpServer.GetApp()});
+//init server
+function init_app () {
+    const http_server = new HttpServer();
+    const ws_server = new WSServer();
+    
+    http_server.Init({port: 40096});
+    ws_server.Init({http_server: http_server.GetApp()});
 
+    _InitApplication({
+        HttpServerInstance: http_server,
+        WSServerInstance: ws_server,
+        Configuration: {
+            enable_ws: true,
+            enable_mqtt: false
+        }
+    });
+}
+
+//connect to freeSWITCH server
 let conn = new esl.Connection('39.108.134.243', 8021, 'fs', () => {
     conn.api('version', res => {
         console.log("FreeSWITCH version:");
@@ -30,18 +48,17 @@ let conn = new esl.Connection('39.108.134.243', 8021, 'fs', () => {
     });
 
     conn.events('json', 'DTMF CUSTOM conference::maintenance', res => {
-
-        _ControlerFactory.GetConferenceProxy().Init(conn);
-        _ControlerFactory.GetPttConferenceProxy().Init(conn);
+        let conf_proxy = ConfProxyFactory.CreateProxy(conn);
+        let ptt_proxy = PttProxyFactory.CreateProxy(conn);
 
         conn.on('esl::event::CUSTOM::*', event => {
             if (event.getHeader('Event-Subclass') === 'conference::maintenance') {
                 let conf_name = event.getHeader('Conference-Name');
 
                 if (conf_name.match('^90\\d{4}$')) {
-                    _ControlerFactory.GetConferenceProxy().ProcessEvent(event);
+                    conf_proxy.ProcessEvent(event);
                 } else if (conf_name.match('^80\\d{4}$')) {
-                    _ControlerFactory.GetPttConferenceProxy().ProcessEvent(event);
+                    ptt_proxy.ProcessEvent(event);
                 } else {
                     console.log('unknow event');
                     console.log(conf_name);
@@ -50,7 +67,7 @@ let conn = new esl.Connection('39.108.134.243', 8021, 'fs', () => {
         });
 
         conn.on('esl::event::DTMF::*', event => {
-            _ControlerFactory.GetPttConferenceProxy().DTMFFilter(event);
+            ptt_proxy.DTMFFilter(event);
         });
     });
 

@@ -1,15 +1,23 @@
 /**
  * Created by john on 8/28/17.
  */
-const NoticeApi = require('../interface/event_notification_api');
+const NoticeApi = require('../interface/event_notice_api');
 
-let PttConferenceProxy = module.exports = function () {
+let proxy_array_ = [];
+module.exports = {
+    CreateProxy : function(esl){
+        let proxy = new PttConferenceProxy(esl);
+        proxy_array_.push(proxy);
+        return proxy;
+    },
+    GetInstance : function(index){
+        return proxy_array_[index];
+    }
+}
 
-};
-
-PttConferenceProxy.prototype.Init = function (esl) {
-    this.esl = esl;
-};
+const PttConferenceProxy = function(esl){
+    this.esl_ = esl;
+}
 
 PttConferenceProxy.prototype.GetPttList = function (pfunc) {
     let self = this;
@@ -63,7 +71,7 @@ PttConferenceProxy.prototype.ProcessEvent = function (event) {
     //TODO
     NoticeApi.SendNotice({
         type: 'ptt',
-        sub_type: event_act,
+        action: event_act,
         msg: 'ok',
         code: '200',
         data: data_obj
@@ -115,8 +123,17 @@ PttConferenceProxy.prototype.ProcessEvent = function (event) {
     }
 };
 
-PttConferenceProxy.prototype.ProcessRequest = function (data) {
+PttConferenceProxy.prototype.Command = function (data, pfunc) {
     //TODO
+    if (typeof(pfunc) === 'function') {
+        pfunc({
+            type: 'ptt',
+            action: data.action,
+            msg: 'test message',
+            code: '100',
+            data: data 
+        });
+    }
 };
 
 //private
@@ -229,7 +246,7 @@ PttConferenceProxy.prototype.on_mute_member = function (obj) {
     //TODO
     NoticeApi.SendNotice({
         type: 'ptt',
-        sub_type: 'speaking-right-off',
+        action: 'speaking-right-off',
         msg: 'ok',
         code: '200',
         data: obj
@@ -242,7 +259,7 @@ PttConferenceProxy.prototype.on_unmute_member = function (obj) {
     //TODO
     NoticeApi.SendNotice({
         type: 'ptt',
-        sub_type: 'speaking-right-on',
+        action: 'speaking-right-on',
         msg: 'ok',
         code: '200',
         data: obj

@@ -1,16 +1,23 @@
 /**
  * Created by john on 8/28/17.
  */
-const NoticeApi = require('../interface/event_notification_api');
+const NoticeApi = require('../interface/event_notice_api');
+const CONF_ACTION = require('../common/esl_header').ESL_CONFERENCE_ACTION;
 
-let ConferenceProxy = module.exports = function () {
+let proxy_array_ = [];
+module.exports = {
+    CreateProxy : function(esl){
+        let proxy = new ConferenceProxy(esl);
+        proxy_array_.push(proxy);
+        return proxy;
+    },
+    GetInstance : function(index){
+        return proxy_array_[index];
+    }
+}
 
-};
-
-ConferenceProxy.prototype.Init = function (esl) {
-    console.log('11111111');
+const ConferenceProxy = function(esl){
     this.esl_ = esl;
-    console.log(typeof(this.esl_));
 };
 
 ConferenceProxy.prototype.GetConfList = function (pfunc) {
@@ -36,7 +43,6 @@ ConferenceProxy.prototype.GetConfList = function (pfunc) {
             pfunc([]);
         }
     } else {
-        console.log('222', typeof(pfunc));
         pfunc([]);
     }
 };
@@ -49,7 +55,7 @@ ConferenceProxy.prototype.ProcessEvent = function (event) {
     //TODO
     NoticeApi.SendNotice({
         type:       'conference',
-        sub_type:   event_act,
+        action:   event_act,
         msg:        'ok',
         code:       '200',
         data: data_obj
@@ -102,9 +108,62 @@ ConferenceProxy.prototype.ProcessEvent = function (event) {
 
 };
 
-//process request
-ConferenceProxy.prototype.ProcessRequest = function (data) {
-    //TODO
+ConferenceProxy.prototype.Command = function (data, pfunc) {
+    let self = this;
+    let command = "conference " + data.conference_name + " " + data.action + " ";
+
+    switch (data.action) {
+        case CONF_ACTION.DEAF:
+        case CONF_ACTION.MUTE:
+        case CONF_ACTION.UNDEAF:
+        case CONF_ACTION.UNMUTE:
+        case CONF_ACTION.HUP:
+        case CONF_ACTION.KICK:
+            command += data.member_id;
+            break;
+        case CONF_ACTION.DTMF:
+        case CONF_ACTION.ENERGY:
+        case CONF_ACTION.VOLUME_IN:
+        case CONF_ACTION.VOLUME_OUT:
+        case CONF_ACTION.SAYMEMBER:
+            command += data.member_id + " " + data.value;
+            break;
+        case CONF_ACTION.RECORDING:
+            command += data.option + data.value;
+            break;
+        case CONF_ACTION.LOCK:
+        case CONF_ACTION.UNLOCK:
+            command += '';
+            break;
+        default:
+            return;
+    }
+
+    try {
+        self.esl_.api(command, res => {
+            console.log('ConferenceProxy::Command :', res.getBody());
+            if (typeof(pfunc) === 'function') {
+                pfunc({
+                    type: 'conference',
+                    action: data.action,
+                    msg: 'success',
+                    code: '200',
+                    data: res.getBody()
+                });
+            }
+        });
+    } catch (e) {
+        console.log(e);
+        if (typeof(pfunc) === 'function') {
+            pfunc({
+                type: 'conference',
+                action: data.action,
+                msg: e.message,
+                code: '300',
+                data: resizeBy.getBody()
+            });
+        }
+    }
 };
 
 //private
@@ -126,7 +185,7 @@ ConferenceProxy.prototype.on_conference_create = function (obj) {
     //TODO
     NoticeApi.SendNotice({
         type:       'conference',
-        sub_type:   'conference-create',
+        action:   'conference-create',
         msg:        'ok',
         code:       '200',
         data: obj
@@ -139,7 +198,7 @@ ConferenceProxy.prototype.on_conference_destroy = function (obj) {
     //TODO
     NoticeApi.SendNotice({
         type:       'conference',
-        sub_type:   'conference-destroy',
+        action:   'conference-destroy',
         msg:        'ok',
         code:       '200',
         data: obj

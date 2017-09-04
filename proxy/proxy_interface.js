@@ -2,36 +2,41 @@
  * Created by john on 8/30/17.
  */
 const url = require('url');
+const ConfProxyFactory = require('./conference_proxy');
+const PttConfProxyFactory = require('./ptt_conference_proxy');
+const EventNoticeApi = require('../interface/event_notice_api');
 
-const RequestInterface = module.exports = {
-    DispatchRequest: dispatch_conference_request,
-    RequestRouter: conference_request_router
-};
+const IProxyInterface = module.exports = function () {};
 
-function dispatch_conference_request (buff) {
-
+IProxyInterface.prototype.DispatchRequest = function (buff) {
     let data = {};
     try {
-        data = JSON.stringify(buff);
+        data = JSON.parse(buff);
     } catch (e) {
         console.log(e);
+        return;
     }
 
     switch (data.type) {
         case 'conference':
-            _ControlerFactory.GetConferenceProxy().ProcessRequest(data);
+            //TODO
+            ConfProxyFactory.GetInstance(0).Command(data, ret => {
+                EventNoticeApi.SendNotice(ret);
+            });
             break;
         case 'ptt':
-            _ControlerFactory.GetPttConferenceProxy().ProcessRequest(data);
+            //TODO
+            PttConfProxyFactory.GetInstance(0).Command(data, ret => {
+                EventNoticeApi.SendNotice(ret);
+            });
             break;
         default:
             //TODO
             return;
     }
-}
+};
 
-//http request router
-function conference_request_router (req, res) {
+IProxyInterface.prototype.DispatchRouter = function(req, res) {
     //TODO
     console.log('http request:', req.url);
     if (req.url.indexOf('/getconflist') === 0 && req.method === 'GET') {
@@ -53,4 +58,4 @@ function conference_request_router (req, res) {
         res.writeHeader(404);
         res.end();
     }
-}
+};
