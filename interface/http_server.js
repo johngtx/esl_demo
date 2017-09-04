@@ -8,7 +8,7 @@ let HttpServer = module.exports = function () {};
 
 HttpServer.prototype.Init = function (config) {
     let self = this;
-    let app = http.createServer(RequestInterface.RequestRouter);
+    let app = http.createServer(RequestInterface.DispatchRouter);
 
     self.server = app;
 
