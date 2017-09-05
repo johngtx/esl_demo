@@ -25,14 +25,15 @@ function init_app () {
         WSServerInstance: ws_server,
         Configuration: {
             enable_ws: true,
-            enable_mqtt: false
+            enable_mqtt: false,
+            record_path: './record'
         }
     });
 };
 
 init_app();
 //connect to freeSWITCH server
-let conn = new esl.Connection('39.108.134.243', 8021, 'fs', () => {
+let conn = new esl.Connection('39.108.134.243', 8021, 'ClueCon', () => {
     conn.api('version', res => {
         console.log("FreeSWITCH version:");
         console.log(res.getBody());

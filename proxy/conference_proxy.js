@@ -251,4 +251,4 @@ ConferenceProxy.prototype.get_conf_record_file_name = function (obj){
         filename;
 
     return full_path;
-}
+};
