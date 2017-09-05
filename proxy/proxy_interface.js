@@ -62,9 +62,7 @@ module.exports = {
             let data = '';
             req.on('data', chunk => { data += chunk; });
             req.on('end', () => {
-                let obj = JSON.parse(data);
                 console.log(data);
-                console.log(obj.hello);
             });
         } else {
             console.log('unknow request router');
