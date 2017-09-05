@@ -2,6 +2,7 @@
  * Created by john on 8/30/17.
  */
 const url = require('url');
+
 const ConfProxyFactory = require('./conference_proxy');
 const PttConfProxyFactory = require('./ptt_conference_proxy');
 const EventNoticeApi = require('../interface/event_notice_api');
@@ -54,11 +55,19 @@ module.exports = {
             });
         } else if (req.url.indexOf('/cdr') === 0 && req.method === 'POST') {
             console.log('recv cdr post');
-            console.log(req);
             res.writeHeader(200);
             res.end();
+
+            //TODO
+            let data = '';
+            req.on('data', chunk => { data += chunk; });
+            req.on('end', () => {
+                let obj = JSON.parse(data);
+                console.log(data);
+                console.log(obj.hello);
+            });
         } else {
-            console.log('22222');
+            console.log('unknow request router');
             res.writeHeader(404);
             res.end();
         }
