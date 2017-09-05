@@ -7,7 +7,9 @@ module.exports = function (config) {
         WSServerInstance: undefined,
         Configuration: {
             enable_ws: false,
-            enable_mqtt: false
+            enable_mqtt: false,
+
+            record_path: './record'
         }
     };
 

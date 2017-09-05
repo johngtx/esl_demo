@@ -141,7 +141,7 @@ ConferenceProxy.prototype.Command = function (data, pfunc) {
 
     try {
         self.esl_.api(command, res => {
-            console.log('ConferenceProxy::Command :', res.getBody());
+            console.log('ConferenceProxy::Command: ', res.getBody());
             if (typeof(pfunc) === 'function') {
                 pfunc({
                     type: 'conference',
@@ -240,3 +240,15 @@ ConferenceProxy.prototype.on_lock = function (obj) {
 ConferenceProxy.prototype.on_unlock = function (obj) {
     console.log('Conference unlock:', obj.conference_name);
 };
+
+ConferenceProxy.prototype.get_conf_record_file_name = function (obj){
+    let date = new Date();
+    let path = _GetApplication().Configuration.record_path;
+    let filename = 'conference-' + obj.conference_name + '-' + date.toJSON();
+
+    let full_path = path +
+        date.getFullYear() + '/' + date.getMonth() + date.getDay() + '/' + 
+        filename;
+
+    return full_path;
+}

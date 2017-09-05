@@ -52,6 +52,11 @@ module.exports = {
                 res.write(content);
                 res.end();
             });
+        } else if (req.url.indexOf('/cdr') === 0 && req.method === 'POST') {
+            console.log('recv cdr post');
+            console.log(req);
+            res.writeHeader(200);
+            res.end();
         } else {
             console.log('22222');
             res.writeHeader(404);
