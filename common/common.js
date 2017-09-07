@@ -2,23 +2,15 @@
  * Created by john on 8/29/17.
  */
 module.exports = function (config) {
-    let application_ = {
-        HttpServerInstance: undefined,
-        WSServerInstance: undefined,
-        Configuration: {
-            enable_ws: false,
-            enable_mqtt: false,
-
-            record_path: './record'
-        }
-    };
+    let application_ = {};
 
     global._GetApplication = () => { return application_; };
     global._InitApplication = app => { application_ = Object.assign(app); }
 
     global._GetDTMFHeader = get_dtmf_header;
     global._GetConferenceMaintenanceHeader = get_conference_maintenance_header;
-}();
+    global._GenerateUUID = generate_uuid;
+};
 
 function get_dtmf_header(event) {
     return {
@@ -42,6 +34,7 @@ function get_dtmf_header(event) {
 
 function get_conference_maintenance_header(event) {
     return {
+        action: event.getHeader('Action'),
         conference_name: event.getHeader('Conference-Name'),
         conference_uuid: event.getHeader('Conference-Unique-ID'),
         answer_state: event.getHeader('Answer-State'),
@@ -55,3 +48,14 @@ function get_conference_maintenance_header(event) {
         energy: event.getHeader('Current-Energy')
     };
 }
+
+function generate_uuid() {
+    var d = new Date().getTime();
+    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = (d + Math.random() * 16) % 16 | 0;
+        d = Math.floor(d / 16);
+        return (c =='x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+
+    return uuid;
+};

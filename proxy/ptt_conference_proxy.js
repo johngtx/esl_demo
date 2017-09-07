@@ -3,212 +3,188 @@
  */
 const NoticeApi = require('../interface/event_notice_api');
 
-let proxy_array_ = [];
-module.exports = {
-    CreateProxy : function(esl){
-        let proxy = new PttConferenceProxy(esl);
-        proxy_array_.push(proxy);
-        return proxy;
-    },
-    GetInstance : function(index){
-        return proxy_array_[index];
+module.exports = class PttConferenceProxy{
+    constructor(esl) {
+        this.esl_ = esl;
+    }
+
+    GetPttList() {
+        let self = this;
+        return new Promise( (resolve, reject) => {
+            try {
+                self.esl_.api("conference json_list", res => {
+                    let data = JSON.parse(res.getBody());
+                    let list = [];
+                    for (let i = 0; i < data.length; ++i) {
+                        let conf = data[i];
+                        if (conf.conference_name.match('^80\\d{4}$')) {
+                            list.push(conf);
+                        }
+                    }
+                    resolve(list);
+                });
+            } catch (e) {
+                reject(e);
+            }
+        });
+    }
+
+    DTMFFilter(event) {
+        let self = this;
+        let dtmf = _GetDTMFHeader(event);
+
+        change_ptt_speaking_right.call(self, dtmf.caller_dest_number, dtmf);
+    }
+
+    ProcessEvent(event) {
+        let self = this;
+        let obj = _GetConferenceMaintenanceHeader(event);
+
+        switch (obj.action) {
+            case 'add-member':
+                on_add_member.call(this, obj);
+                break;
+            case 'del-member':
+                on_del_member.call(this, obj);
+                break;
+            case 'mute-member':
+                on_mute_member.call(this, obj);
+                break;
+            case 'unmute-member':
+                on_unmute_member.call(this, obj);
+                break;
+            case 'kick-member':
+                on_kick_member.call(this, obj);
+                break;
+            case 'start-talking':
+            case 'stop-talking':
+                NoticeApi.SendNotice({
+                    type:       'ptt',
+                    action:     obj.action,
+                    msg:        'ok',
+                    code:       '200',
+                    data:       obj
+                });
+                console.log(obj.action);
+                break;
+            default:
+        }
+    }
+
+    Command(data) {
+        let self = this;
+        return new Promise((resolve, reject) => {
+            resolve({
+                type: 'ptt',
+                action: data.action,
+                msg: 'test message',
+                code: '100',
+                data: data 
+            });
+        });
     }
 }
 
-const PttConferenceProxy = function(esl){
-    this.esl_ = esl;
-}
-
-PttConferenceProxy.prototype.GetPttList = function (pfunc) {
+//private
+function get_ptt_speaking_right_status(confname, uuid) {
     let self = this;
+    let status = false;
+    let member_id = '';
+    let member_talker = '';
+    let confobj = {};
 
-    if (typeof(pfunc) === Function) {
-        try {
-            self.esl.api("conference json_list", res => {
-                let data = JSON.stringify(res.getBody());
-                let list = [];
+    return new Promise((resolve, reject) => {
+        try {                
+            self.esl_.api("conference json_list", res => {
+                let data = JSON.parse(res.getBody());
                 for (let i = 0; i < data.length; ++i) {
                     let conf = data[i];
-                    if (conf.conference_name.match('^80\\d{4}$')) {
-                        list.push(conf);
+                    if (conf.conference_name === confname) {
+                        for (let i = 0; i < conf.members.length; ++i) {
+                            let member = conf.members[i];
+                            if (member.uuid === uuid) {
+                                member_id = member.id;
+                            }
+                            if (member.flags.can_speak === true) {
+                                status = true;
+                                member_talker = member.uuid;
+                            }
+                        }
+
+                        confobj = conf;
+                        break;
                     }
                 }
-                pfunc(list);
+                resolve([confobj, status, member_id, member_talker]);
+            });
+        } catch (e) {
+            reject(e);
+        }
+    });
+};
+
+function change_ptt_speaking_right(confname, dtmf) {
+    let self = this;
+    let flag = '';
+
+    get_ptt_speaking_right_status.call(self, confname, dtmf.caller_uuid).then((data) => {
+        let [conf, status, member_id, member_talker] = data;
+        //TODO
+        switch (dtmf.dtmf_digit) {
+            case '*':
+                flag = 'speaking-right-on';
+                if (status) {
+                    return;
+                } else {
+                    command = 'conference ' + conf.conference_name +
+                        ' unmute ' + member_id;
+                }
+                break;
+            case '#':
+                flag = 'speaking-right-off';
+                if (status && member_talker === dtmf.caller_uuid) {
+                    command = 'conference ' + conf.conference_name +
+                        ' mute ' + member_id;
+                } else {
+                    return;
+                }
+                break;
+            default:
+                return;
+        }
+
+        try {
+            self.esl_.api(command, res => {
+                //TODO
+                NoticeApi.SendNotice({
+                    type: 'ptt',
+                    action: flag,
+                    msg: 'ok',
+                    code: '200',
+                    data: {
+                        conference_name: conf.conference_name,
+                        conference_uuid: conf.conference_uuid,
+                        caller_uuid: dtmf.caller_id_name,
+                        caller_name: dtmf.caller_id_number,
+                        caller_number: dtmf.caller_id_name,
+                        caller_dst_num: dtmf.caller_dest_number,
+                        member_id: member_id
+                    }
+                });
             });
         } catch (e) {
             console.log(e);
-            pfunc([]);
         }
-    } else {
-        pfunc([]);
-    }
-}
-
-PttConferenceProxy.prototype.DTMFFilter = function (event) {
-    let self = this;
-    let dtmf = _GetDTMFHeader(event);
-
-    //TODO
-    try {
-        self.esl.api('conference json_list', res => {
-            let res_data = JSON.parse(res.getBody());
-            for (let i = 0; i < res_data.length; ++i) {
-                let conf = res_data[i];
-                if (conf.conference_name.match('^80\\d{4}$')) {
-                    self.change_ptt_speaking_right(conf, dtmf);
-                }
-            }
-        });
-    } catch (e) {
-        console.log(e);
-    }
-};
-
-PttConferenceProxy.prototype.ProcessEvent = function (event) {
-    let event_act = event.getHeader('Action');
-    let data_obj = _GetConferenceMaintenanceHeader(event);
-
-    //TODO
-    NoticeApi.SendNotice({
-        type: 'ptt',
-        action: event_act,
-        msg: 'ok',
-        code: '200',
-        data: data_obj
     });
-
-    switch (event_act) {
-        case 'add-member':
-            return this.on_add_member(data_obj);
-        case 'del-member':
-            return this.on_del_member(data_obj);
-        case 'dtmf':
-            return this.on_dtmf(data_obj);
-        case 'stop-talking':
-            return this.on_stop_talking(data_obj);
-        case 'start-talking':
-            return this.on_start_talking(data_obj);
-        case 'mute-member':
-            return this.on_mute_member(data_obj);
-        case 'unmute-member':
-            return this.on_unmute_member(data_obj);
-        case 'kick-member':
-            return this.on_kick_member(data_obj);
-        case 'dtmf-member':
-            return this.on_dtmf_member(data_obj);
-        case 'lock':
-            return this.on_lock(data_obj);
-        case 'unlock':
-            return this.on_unlock(data_obj);
-        case 'conference-create':
-            return this.on_conference_create(data_obj);
-        case 'conference-destroy':
-            return this.on_conference_destroy(data_obj);
-        case 'energy-level':
-        case 'volume-level':
-        case 'gain-level':
-        case 'energy-level-member':
-        case 'volume-in-member':
-        case 'volume-out-member':
-        case 'play-file':
-        case 'play-file-member':
-        case 'speak-text':
-        case 'speak-text-member':
-        case 'transfer':
-        case 'bgdial-result':
-        case 'floor-change':
-            return this.on_default_process_func(event);
-        default:
-            return this.on_default_process_func(data_obj);
-    }
 };
 
-PttConferenceProxy.prototype.Command = function (data, pfunc) {
-    //TODO
-    if (typeof(pfunc) === 'function') {
-        pfunc({
-            type: 'ptt',
-            action: data.action,
-            msg: 'test message',
-            code: '100',
-            data: data 
-        });
-    }
-};
-
-//private
-PttConferenceProxy.prototype.get_ptt_speaking_right_status = function(conf, uuid) {
-    let status = false;
-    let member_id = undefined;
-    let member_talker = undefined;
-
-    if (conf.hasOwnProperty('members')) {
-        for (let i = 0; i < conf.members.length; ++i) {
-            let member = conf.members[i];
-            if (member.uuid === uuid) {
-                member_id = member.id;
-            }
-            if (member.flags.can_speak === true) {
-                status = true;
-                member_talker = member.uuid;
-            }
-        }
-    }
-
-    return [status, member_id, member_talker];
-};
-
-PttConferenceProxy.prototype.change_ptt_speaking_right = function (conf, dtmf) {
+function on_add_member(obj) {
     let self = this;
-
-    let [status, member_id, member_talker] =
-        self.get_ptt_speaking_right_status(conf, dtmf.caller_uuid);
-    //console.log('st:', member_id, status, member_talker);
-
-    //TODO
-    switch (dtmf.dtmf_digit) {
-        case '*':
-            if (status) {
-                return;
-            } else {
-                command = 'conference ' + conf.conference_name +
-                    ' unmute ' + member_id;
-            }
-            break;
-        case '#':
-            if (status && member_talker === dtmf.caller_uuid) {
-                command = 'conference ' + conf.conference_name +
-                    ' mute ' + member_id;
-            } else {
-                return;
-            }
-            break;
-        default:
-            return;
-    }
-
-    try {
-        console.log('command:', command);
-        self.esl.api(command, res => {
-            //console.log(res);
-        });
-    } catch (e) {
-        console.log(e);
-    }
-};
-
-PttConferenceProxy.prototype.on_default_process_func = function (obj) {
-    //console.log(obj);
-};
-
-PttConferenceProxy.prototype.on_add_member = function (obj) {
-    console.log('User enter conference:', obj.caller_name, obj.conference_name);
-
     //TODO
     try {
         let command =
             'conference ' + obj.conference_name + ' mute ' + obj.member_id;
-        this.esl.api(command, res => {
+        self.esl_.api(command, res => {
             console.log('mute member...');
         });
     } catch (e) {
@@ -216,68 +192,55 @@ PttConferenceProxy.prototype.on_add_member = function (obj) {
     }
 };
 
-PttConferenceProxy.prototype.on_del_member = function (obj) {
-    console.log('User leave conference:', obj.caller_name, obj.conference_name);
+function on_del_member(obj) {
+    //TODO
+    let self = this;
+    let conf, status, member_id, member_talker;
+    get_ptt_speaking_right_status.call(self, obj.conference_name, obj.caller_uuid).then(data => {
+        [conf, status, member_id, member_talker] = data;
+    });
+
+    if (obj.member_id === member_id) {
+        NoticeApi.SendNotice({
+            type: 'ptt',
+            action: 'speaking-right-off',
+            msg: 'ok',
+            code: '200',
+            data: obj
+        });
+    }
 };
 
-PttConferenceProxy.prototype.on_conference_create = function (obj) {
-    console.log('New conference:', obj.conference_name);
-};
-
-PttConferenceProxy.prototype.on_conference_destroy = function (obj) {
-    console.log('Conference destroy:', obj.conference_name);
-};
-
-PttConferenceProxy.prototype.on_dtmf = function (obj) {
-    console.log('Conference dtmf:', obj.caller_name, obj.conference_name);
-};
-
-PttConferenceProxy.prototype.on_stop_talking = function (obj) {
-    console.log('Conference stop talking:', obj.caller_name, obj.conference_name, obj.energy);
-};
-
-PttConferenceProxy.prototype.on_start_talking = function (obj) {
-    console.log('Conference start talking:', obj.caller_name, obj.conference_name, obj.energy);
-};
-
-PttConferenceProxy.prototype.on_mute_member = function (obj) {
+function on_mute_member(obj) {
     console.log('Conference mute member:', obj.caller_name, obj.conference_name);
-
-    //TODO
     NoticeApi.SendNotice({
         type: 'ptt',
-        action: 'speaking-right-off',
+        action: 'stop-talking',
         msg: 'ok',
         code: '200',
         data: obj
     });
 };
 
-PttConferenceProxy.prototype.on_unmute_member = function (obj) {
+function on_unmute_member(obj) {
     console.log('Conference unmute member:', obj.caller_name, obj.conference_name);
+};
 
+function on_kick_member(obj) {
     //TODO
-    NoticeApi.SendNotice({
-        type: 'ptt',
-        action: 'speaking-right-on',
-        msg: 'ok',
-        code: '200',
-        data: obj
+    let self = this;
+    let conf, status, member_id, member_talker;
+    get_ptt_speaking_right_status.call(self, obj.conference_name, obj.caller_uuid).then( data => {
+        [conf, status, member_id, member_talker] = data;
     });
-};
 
-PttConferenceProxy.prototype.on_kick_member = function (obj) {
-    console.log('Conference kick member:', obj.caller_name, obj.conference_name);
-};
-
-PttConferenceProxy.prototype.on_dtmf_member = function (obj) {
-    console.log('conference dtmf member:', obj.caller_name, obj.conference_name);
-};
-
-PttConferenceProxy.prototype.on_lock = function (obj) {
-    console.log('Conference lock:', obj.conference_name);
-};
-
-PttConferenceProxy.prototype.on_unlock = function (obj) {
-    console.log('Conference unlock:', obj.conference_name);
+    if (obj.member_id === member_id) {
+        NoticeApi.SendNotice({
+            type: 'ptt',
+            action: 'speaking-right-off',
+            msg: 'ok',
+            code: '200',
+            data: obj
+        });
+    }
 };
