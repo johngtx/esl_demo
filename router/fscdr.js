@@ -7,11 +7,10 @@ module.exports = function () {
     let router = Router();
 
     router.use(BodyParser.json());
-
     router.post('/', (req, res) => {
         //TODO
         console.log('fscdr router /');
-        console.log(req.body);
+        CdrApi.ProcessFsCdrData(req.body);
         res.end();
     });
 

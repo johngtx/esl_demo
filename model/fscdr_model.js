@@ -1,5 +1,3 @@
-let FsCdrModel = module.exports = Object.create();
-
 /*
  *  data {
  *      core_uuid           string
@@ -20,21 +18,24 @@ let FsCdrModel = module.exports = Object.create();
  *  }
  */
 
-FsCdrModel.Insert = function (data){
-    console.log('FsCdrModel Insert', data);
-}
+module.exports = {
+    Insert (data) {
+        console.log('FsCdrModel Insert', data);
+    },
 
-FsCdrModel.Delete = function (data){
-    console.log('FsCdrModel Delete', data);
-}
+    Delete (data) {
+        console.log('FsCdrModel Delete', data);
+    },
 
-FsCdrModel.Update = function (olddata, newdata){
-}
+    Update (olddata, newdata) {
 
-FsCdrModel.Search = function (filter){
-    console.log('FsCdrModel Search', data);
-}
+    },
 
-FsCdrModel.SearchAll = function () {
-    console.log('FsCdrModel SearchAll', data);
-}
+    Search (filter) {
+        console.log('FsCdrModel Search', data);
+    },
+
+    SearchAll () {
+        console.log('FsCdrModel SearchAll', data);
+    }
+};
