@@ -6,12 +6,18 @@ const CdrApi = require('../proxy/fscdr_api');
 module.exports = function () {
     let router = Router();
 
-    router.use(BodyParser.json());
+    //router.use(BodyParser.json());
     router.post('/', (req, res) => {
-        //TODO
-        console.log('fscdr router /');
-        CdrApi.ProcessFsCdrData(req.body);
-        res.end();
+        console.log('fscdr router post /');
+        let alldata = '';
+        req.on('data', data => {
+            alldata += data;
+        });
+        req.on('end', () => {
+            CdrApi.ProcessFsCdrData(alldata);
+            alldata = '';
+            res.end();
+        });
     });
 
     router.get('/all', (req, res) => {
