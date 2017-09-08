@@ -1,12 +1,11 @@
 //freeSWITCH mod_xml_curl
 const Router = require('router');
-const BodyParse = require('body-parser');
+const Url = require('url');
 const FsApi = require('../proxy/fsconfig_api');
 
 module.exports = function () {
     let router = Router();
 
-    router.use(BodyParse.json());
     router.get('/dialplan', (req, res) => {
         //TODO
         console.log('fs api router /dialplan');
@@ -14,9 +13,16 @@ module.exports = function () {
     });
 
     router.get('/directory', (req, res) => {
-        //TODO
-        console.log('fs api router /directory');
+        let params = Url.parse(req.url, true).query;
+        let content = FsApi.GetFsDirectory(params);
+        
+        res.write(FsApi.GetFsDirectory(params));
         res.end();
+    });
+
+    router.post('/directory', (req, res) => { 
+        //TODO 
+        res.end(); 
     });
 
     return router;

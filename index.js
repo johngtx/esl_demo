@@ -3,6 +3,7 @@
  */
 'use strict';
 const esl = require('modesl');
+const xml = require('xml');
 
 require('./common/common')();
 const HttpServer = require('./interface/http_server');
@@ -37,4 +38,19 @@ const EslConnection = require('./proxy/esl_connection');
     }, error => {
         console.log('connect to server failed:', error);
     });
+
+    //xml test
+    let content = xml([{
+        document: [{
+            _attr: { name: 'attr1'}
+        }, {
+            section: [{
+                _attr: { name: 'attr2'}
+            }, {
+                param: { _attr: { value: 'hello world' } }
+            }]
+        }]
+    }]);
+
+    console.log(content);
 }());
