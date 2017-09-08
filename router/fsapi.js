@@ -15,8 +15,10 @@ module.exports = function () {
     router.get('/directory', (req, res) => {
         let params = Url.parse(req.url, true).query;
         let content = FsApi.GetFsDirectory(params);
+        console.log(params);
+        console.log(content);
         
-        res.write(FsApi.GetFsDirectory(params));
+        res.write(content);
         res.end();
     });
 
