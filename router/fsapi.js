@@ -7,26 +7,30 @@ module.exports = function () {
     let router = Router();
 
     router.get('/dialplan', (req, res) => {
-        //TODO
         console.log('fs api router /dialplan');
-        res.end();
-    });
 
-    router.get('/directory', (req, res) => {
-        console.log('1111');
         let params = Url.parse(req.url, true).query;
-        let content = FsApi.GetFsDirectory(params);
-        console.log(params);
-        console.log(content);
-        
+        let content = FsApi.GetFsDialplan(params);
         res.write(content);
         res.end();
     });
 
-    router.post('/directory', (req, res) => { 
-        console.log('2222');
-        //TODO 
-        res.end(); 
+    router.get('/directory', (req, res) => {
+        console.log('fs api get router /directory');
+
+        let params = Url.parse(req.url, true).query;
+        let content = FsApi.GetFsDirectory(params);
+        res.write(content);
+        res.end();
+    });
+
+    router.get('/configuration', (req, res) => {
+        console.log('fs api get router /configuration');
+
+        let params = Url.parse(req.url, true).query;
+        let content = FsApi.GetFsConfiguration(params);
+        res.write(content);
+        res.end();
     });
 
     return router;

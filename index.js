@@ -29,7 +29,7 @@ const EslConnection = require('./proxy/esl_connection');
 
     //connect to freeswitch server
     let esl = new EslConnection().Connect({
-        ip: '39.108.134.243',
+        ip: '127.0.0.1',
         port: 8021,
         pwd: 'ClueCon'
     }).then( conn => {
@@ -37,20 +37,8 @@ const EslConnection = require('./proxy/esl_connection');
         _GetApplication().EslConnections.push(conn);
     }, error => {
         console.log('connect to server failed:', error);
+    }).catch( (e) => {
+        console.log(e);
     });
 
-    //xml test
-    let content = xml([{
-        document: [{
-            _attr: { name: 'attr1'}
-        }, {
-            section: [{
-                _attr: { name: 'attr2'}
-            }, {
-                param: { _attr: { value: 'hello world' } }
-            }]
-        }]
-    }]);
-
-    console.log(content);
 }());

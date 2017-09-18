@@ -96,7 +96,9 @@ function get_ptt_speaking_right_status(confname, uuid) {
     return new Promise((resolve, reject) => {
         try {                
             self.esl_.api("conference json_list", res => {
-                let data = JSON.parse(res.getBody());
+                try { let data = JSON.parse(res.getBody()); } 
+                catch (e) { reject(e); }
+               
                 for (let i = 0; i < data.length; ++i) {
                     let conf = data[i];
                     if (conf.conference_name === confname) {

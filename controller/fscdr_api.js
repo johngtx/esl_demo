@@ -1,6 +1,7 @@
 //fs mod_json_cdr 
 const FsCdrModel = require('../model/fscdr_model');
 
+//interface
 module.exports = {
     ProcessFsCdrData (data) {
         FsCdrModel.Insert(translate_origin_cdr_data(data));
@@ -11,6 +12,7 @@ module.exports = {
     }
 }
 
+//////////////////////////////////////////////////////////////////////////
 function translate_origin_cdr_data(data) {
     try {
         let obj = JSON.parse(data);

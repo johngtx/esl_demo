@@ -2,13 +2,13 @@ Simple FreeSWITCH ESL application
 
 # mod_xml_curl
 
-##一. 启用mod_xml_curl<br>
+## 一. 启用mod_xml_curl<br>
 ```
 conf/autoload_configs/modules.conf.xml
 
 <load module="mod_xml_curl"/>
 ```
-##二. 修改mod_xml_curl配置<br>
+## 二. 修改mod_xml_curl配置<br>
 ```
 conf/autoload_configs/xml_curl.conf.xml
 
@@ -29,7 +29,7 @@ conf/autoload_configs/xml_curl.conf.xml
     </bindings> 
 </configuration>
 ```
-##三. 接口 <br>
+## 三. 接口 <br>
     1. Directory: GET /fsapi/directory <br>
     2. Dialplan: GET /fsapi/dialplan <br>
     3. Configuration: GET /fsapi/configuration <br>
