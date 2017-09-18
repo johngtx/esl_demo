@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<document type="freeswitch/xml">
+  <section name="directory">
+    <domain name="$${domain}">
+      <params>
+        <param name="dial-string" value="{^^:sip_invite_domain=${dialed_domain}:presence_id=${dialed_user}@${dialed_domain}}${sofia_contact(*/${dialed_user}@${dialed_domain})},${verto_contact(${dialed_user}@${dialed_domain})}"/>
+        <!-- These are required for Verto to function properly -->
+        <param name="jsonrpc-allowed-methods" value="verto"/>
+        <!-- <param name="jsonrpc-allowed-event-channels" value="demo,conference,presence"/> -->
+      </params>
+
+      <variables>
+        <variable name="record_stereo" value="true"/>
+        <variable name="default_gateway" value="$${default_provider}"/>
+        <variable name="default_areacode" value="$${default_areacode}"/>
+        <variable name="transfer_fallback_extension" value="operator"/>
+      </variables>
+
+      <groups>
+        <group name=%%group%%>
+          <users>  
+            <user id="%%id%%">
+              <params>
+                <param name="password" value="%%password%%"/>
+                <param name="vm-password" value="%%id%%"/>
+              </params>
+              <variables>
+                <variable name="toll_allow" value="domestic,international,local"/>
+                <variable name="accountcode" value="%%id%%"/>
+                <variable name="user_context" value="%%context%%"/>
+                <variable name="effective_caller_id_name" value="%%name%%"/>
+                <variable name="effective_caller_id_number" value="%%id%%"/>
+                <variable name="outbound_caller_id_name" value="$${outbound_caller_name}"/>
+                <variable name="outbound_caller_id_number" value="$${outbound_caller_id}"/>
+                <variable name="callgroup" value="%%callgroup%%"/>
+              </variables>
+            </user>
+          </users>
+        </group>
+      </groups>
+    </domain>
+  </section>
+</document>

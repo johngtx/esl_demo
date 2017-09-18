@@ -13,6 +13,7 @@ module.exports = function () {
     });
 
     router.get('/directory', (req, res) => {
+        console.log('1111');
         let params = Url.parse(req.url, true).query;
         let content = FsApi.GetFsDirectory(params);
         console.log(params);
@@ -23,6 +24,7 @@ module.exports = function () {
     });
 
     router.post('/directory', (req, res) => { 
+        console.log('2222');
         //TODO 
         res.end(); 
     });

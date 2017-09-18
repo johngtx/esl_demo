@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<document type="freeswitch/xml">
+  <section name="dialplan" description="ESL Dial Plan For FreeSwitch">
+    <context name="public">
+
+      <!-- normal p2p -->
+      <extension name="normal_p2p">
+        <condition field="destination_number" expression="^(134[0-9]{4})$">
+          <action application="bridge" data="user/$1"/>
+        </condition>
+      </extension>
+
+      <!-- custom conference -->
+      <extension name="custom_conference">
+        <condition field="destination_number" expression="^(90[0-9]{4})$">
+          <action application="answer"/>
+          <action application="conference" data="$1@custom_conference"/>
+        </condition>
+      </extension>
+
+      <!-- custom ptt -->
+      <extension name="custom_conference">
+        <condition field="destination_number" expression="^(80[0-9]{4})$">
+          <action application="answer"/>
+          <action application="conference" data="$1@custom_ptt"/>
+        </condition>
+      </extension>
+
+      <!-- test -->
+    </context>
+  </section>
+</document>
