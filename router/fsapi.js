@@ -1,7 +1,7 @@
 //freeSWITCH mod_xml_curl
 const Router = require('router');
 const Url = require('url');
-const FsApi = require('../proxy/fsconfig_api');
+const FsApi = require('../controler/fsconfig_api');
 
 module.exports = function () {
     let router = Router();

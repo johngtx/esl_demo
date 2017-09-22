@@ -8,7 +8,7 @@ const xml = require('xml');
 require('./common/common')();
 const HttpServer = require('./interface/http_server');
 const WSServer = require('./interface/ws_server');
-const EslConnection = require('./proxy/esl_connection');
+const EslConnection = require('./controler/esl_connection');
 
 //entry
 (function() {
@@ -27,18 +27,18 @@ const EslConnection = require('./proxy/esl_connection');
         EslConnections: []
     });
 
-    //connect to freeswitch server
-    let esl = new EslConnection().Connect({
-        ip: '127.0.0.1',
-        port: 8021,
-        pwd: 'ClueCon'
-    }).then( conn => {
-        console.log('connect to server success:', conn.ID);
-        _GetApplication().EslConnections.push(conn);
-    }, error => {
-        console.log('connect to server failed:', error);
-    }).catch( (e) => {
-        console.log(e);
-    });
+    // //connect to freeswitch server
+    // let esl = new EslConnection().Connect({
+    //     ip: '127.0.0.1',
+    //     port: 8021,
+    //     pwd: 'ClueCon'
+    // }).then( conn => {
+    //     console.log('connect to server success:', conn.ID);
+    //     _GetApplication().EslConnections.push(conn);
+    // }, error => {
+    //     console.log('connect to server failed:', error);
+    // }).catch( e => {
+    //     console.log(e);
+    // });
 
 }());

@@ -1,7 +1,7 @@
 //FreeSWITCH mod_json_cdr / mod_xml_cdr
 const Router = require('router');
 const BodyParser = require('body-parser');
-const CdrApi = require('../proxy/fscdr_api');
+const CdrApi = require('../controler/fscdr_api');
 
 module.exports = function () {
     let router = Router();
